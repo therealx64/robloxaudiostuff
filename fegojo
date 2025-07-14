@@ -110,17 +110,20 @@ if not getgenv()["Animator"] then
 end
 local AnimatorModule = getgenv().Animator
 
+-- Track if N is held
+local nHeld = false
+
 -- Quotes and animation
 local specialAnimId = 115084974046541
 local quotes = {
-	[Enum.KeyCode.One] = "Ahahahaha, ahahaha!... I'll murder you!",
-	[Enum.KeyCode.Two] = "Yaaaaay!",
-	[Enum.KeyCode.Three] = "Is that right? Maybe you're right. You are so right!",
-	[Enum.KeyCode.Four] = "Guess I'll be a little rough.",
-	[Enum.KeyCode.Five] = "Don't worry, I'm the strongest."
+	["One"] = "Ahahahaha, ahahaha!... I'll murder you!",
+	["Two"] = "Yaaaaay!",
+	["Three"] = "Is that right? Maybe you're right. You are so right!",
+	["Four"] = "Guess I'll be a little rough.",
+	["Five"] = "Don't worry, I'm the strongest."
 }
 
--- Create the GUI
+-- GUI creation
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "QuoteListGui"
 screenGui.Enabled = false
@@ -128,42 +131,38 @@ screenGui.ResetOnSpawn = false
 screenGui.Parent = PlayerGui
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 250, 0, 150)
-frame.Position = UDim2.new(1, -260, 1, -160)
-frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-frame.BackgroundTransparency = 0.3
+frame.Size = UDim2.new(0, 260, 0, 160)
+frame.Position = UDim2.new(1, -270, 1, -170)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BackgroundTransparency = 0.2
 frame.BorderSizePixel = 0
 frame.Parent = screenGui
 
 local uiListLayout = Instance.new("UIListLayout")
-uiListLayout.Padding = UDim.new(0, 4)
-uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+uiListLayout.Padding = UDim.new(0, 6)
 uiListLayout.Parent = frame
 
-local function createQuoteLabel(order, text)
+local function createLabel(index, text)
 	local label = Instance.new("TextLabel")
+	label.Text = "[" .. index .. "] " .. text
 	label.Size = UDim2.new(1, -10, 0, 24)
 	label.BackgroundTransparency = 1
-	label.TextColor3 = Color3.fromRGB(255, 255, 255)
-	label.TextStrokeTransparency = 0.6
+	label.TextColor3 = Color3.new(1, 1, 1)
+	label.TextStrokeTransparency = 0.5
 	label.TextXAlignment = Enum.TextXAlignment.Left
 	label.Font = Enum.Font.SourceSansBold
 	label.TextSize = 18
-	label.LayoutOrder = order
-	label.Text = string.format("[%d] %s", order, text)
 	label.Parent = frame
 end
 
-createQuoteLabel(1, quotes[Enum.KeyCode.One])
-createQuoteLabel(2, quotes[Enum.KeyCode.Two])
-createQuoteLabel(3, quotes[Enum.KeyCode.Three])
-createQuoteLabel(4, quotes[Enum.KeyCode.Four])
-createQuoteLabel(5, quotes[Enum.KeyCode.Five])
+-- Add all quotes
+createLabel(1, quotes["One"])
+createLabel(2, quotes["Two"])
+createLabel(3, quotes["Three"])
+createLabel(4, quotes["Four"])
+createLabel(5, quotes["Five"])
 
--- Track if N is held
-local nHeld = false
-
--- Show GUI and enable input when N is held
+-- Show GUI on N press
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if input.KeyCode == Enum.KeyCode.N then
 		nHeld = true
@@ -171,7 +170,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	end
 end)
 
--- Hide GUI and disable input when N is released
+-- Hide GUI on N release
 UserInputService.InputEnded:Connect(function(input)
 	if input.KeyCode == Enum.KeyCode.N then
 		nHeld = false
@@ -179,21 +178,19 @@ UserInputService.InputEnded:Connect(function(input)
 	end
 end)
 
--- Function to say message
-local function sayMessage(message)
-	ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(message, "All")
-end
-
--- Only allow quotes when N is held
-UserInputService.InputBegan:Connect(function(input)
+-- Quote triggering (requires N to be held)
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if not nHeld then return end
 
-	local quote = quotes[input.KeyCode]
-	if quote then
-		sayMessage(quote)
+	local keyName = input.KeyCode.Name
+	local quote = quotes[keyName]
 
-		-- Animation on key 3
-		if input.KeyCode == Enum.KeyCode.Three then
+	if quote then
+		-- Say the quote
+		ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(quote, "All")
+
+		-- If it's key 3, play animation
+		if keyName == "Three" then
 			local character = player.Character
 			if character then
 				local anim = AnimatorModule.new(character, specialAnimId)
