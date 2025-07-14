@@ -1,0 +1,147 @@
+local player = game.Players.LocalPlayer
+
+-- Load Animator module
+if not getgenv()["Animator"] then
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/xhayper/Animator/main/Source/Main.lua"))()
+end
+
+local AnimatorModule = getgenv().Animator
+
+-- Animation IDs
+local idleAnimId = 132754291302657
+local runAnimId = 83050015627222
+
+local idleAnim, runAnim
+local isRunning = false
+
+local function setupMovementAnims(character)
+	local humanoid = character:WaitForChild("Humanoid")
+
+	idleAnim = AnimatorModule.new(character, idleAnimId)
+	idleAnim.Looped = true
+	idleAnim:Play()
+
+	runAnim = AnimatorModule.new(character, runAnimId)
+	runAnim.Looped = true
+
+	game:GetService("RunService").RenderStepped:Connect(function()
+		if not humanoid or humanoid.Health <= 0 then return end
+
+		local moving = humanoid.MoveDirection.Magnitude > 0
+
+		if moving and not isRunning then
+			isRunning = true
+			if idleAnim then idleAnim:Stop() end
+			if runAnim then runAnim:Play() end
+		elseif not moving and isRunning then
+			isRunning = false
+			if runAnim then runAnim:Stop() end
+			if idleAnim then idleAnim:Play() end
+		end
+	end)
+
+	humanoid.Died:Connect(function()
+		if idleAnim then idleAnim:Stop() end
+		if runAnim then runAnim:Stop() end
+	end)
+end
+
+if player.Character then
+	setupMovementAnims(player.Character)
+end
+player.CharacterAdded:Connect(setupMovementAnims)
+-------------------------------------------------
+local player = game.Players.LocalPlayer
+local backpack = player:WaitForChild("Backpack")
+
+-- Create the tool
+local tool = Instance.new("Tool")
+tool.Name = "Purple Nuke"
+tool.RequiresHandle = false
+tool.Parent = backpack
+
+writefile("Nuke.mp3", game:HttpGet("https://github.com/therealx64/robloxaudiostuff/raw/refs/heads/main/Gojo's%20maximum%20hollow%20purple%20-%20Hexal.mp3"))
+
+-- Load Animator if not already loaded
+if not getgenv()["Animator"] then
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/xhayper/Animator/main/Source/Main.lua"))()
+end
+
+local Anim = nil
+local sound = nil
+
+tool.Equipped:Connect(function()
+	local character = player.Character
+	if character then
+		Anim = Animator.new(character, 76602645697562)
+		Anim.Looped = false -- prevent looping if supported
+		Anim:Play()
+
+		sound = Instance.new("Sound")
+		sound.SoundId = getcustomasset("Nuke.mp3")
+		sound.Volume = 2
+		sound.Looped = false -- ✅ set to false to prevent music loop (optional)
+		sound.Parent = character:WaitForChild("HumanoidRootPart")
+		sound:Play()
+	end
+end)
+
+tool.Unequipped:Connect(function()
+	if Anim then
+		Anim:Stop()
+		Anim:Destroy()
+	end
+	if sound then
+		sound:Stop()
+		sound:Destroy()
+	end
+	print("Purple Nuke animation and music stopped")
+end)
+-----------------------------------------------------
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local player = Players.LocalPlayer
+
+-- Load Animator module if not already loaded
+if not getgenv()["Animator"] then
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/xhayper/Animator/main/Source/Main.lua"))()
+end
+
+local AnimatorModule = getgenv().Animator
+
+-- Say a message in chat
+local function sayMessage(message)
+	ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(message, "All")
+end
+
+-- Animation ID for key 3
+local specialAnimId = 115084974046541
+
+-- Key to quote mappings
+local quotes = {
+	[Enum.KeyCode.One] = "Ahahahaha, ahahaha!... I'll murder you!",
+	[Enum.KeyCode.Two] = "Yaaaaay!",
+	[Enum.KeyCode.Three] = "Is that right? Maybe you're right. You are so right!",
+	[Enum.KeyCode.Four] = "Guess I'll be a little rough.",
+	[Enum.KeyCode.Five] = "Don't worry, I'm the strongest."
+}
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+
+	local quote = quotes[input.KeyCode]
+	if not quote then return end
+
+	sayMessage(quote)
+
+	if input.KeyCode == Enum.KeyCode.Three then
+		local character = player.Character
+		if character then
+			local anim = AnimatorModule.new(character, specialAnimId)
+			anim.Looped = false
+			anim:Play()
+		end
+	end
+end)
