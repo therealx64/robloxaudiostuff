@@ -129,7 +129,7 @@ screenGui.Parent = PlayerGui
 
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 250, 0, 150)
-frame.Position = UDim2.new(1, -260, 1, -160) -- bottom right corner
+frame.Position = UDim2.new(1, -260, 1, -160)
 frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 frame.BackgroundTransparency = 0.3
 frame.BorderSizePixel = 0
@@ -140,7 +140,6 @@ uiListLayout.Padding = UDim.new(0, 4)
 uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 uiListLayout.Parent = frame
 
--- Create labels
 local function createQuoteLabel(order, text)
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.new(1, -10, 0, 24)
@@ -161,34 +160,40 @@ createQuoteLabel(3, quotes[Enum.KeyCode.Three])
 createQuoteLabel(4, quotes[Enum.KeyCode.Four])
 createQuoteLabel(5, quotes[Enum.KeyCode.Five])
 
--- Show/Hide GUI when holding N
+-- Track if N is held
+local nHeld = false
+
+-- Show GUI and enable input when N is held
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if input.KeyCode == Enum.KeyCode.N then
+		nHeld = true
 		screenGui.Enabled = true
 	end
 end)
 
+-- Hide GUI and disable input when N is released
 UserInputService.InputEnded:Connect(function(input)
 	if input.KeyCode == Enum.KeyCode.N then
+		nHeld = false
 		screenGui.Enabled = false
 	end
 end)
 
--- Say the message
+-- Function to say message
 local function sayMessage(message)
 	ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(message, "All")
 end
 
--- Detect 1-5 input regardless of N being held
+-- Only allow quotes when N is held
 UserInputService.InputBegan:Connect(function(input)
-	local key = input.KeyCode
-	local quote = quotes[key]
+	if not nHeld then return end
 
+	local quote = quotes[input.KeyCode]
 	if quote then
 		sayMessage(quote)
 
-		-- Play special animation for key 3
-		if key == Enum.KeyCode.Three then
+		-- Animation on key 3
+		if input.KeyCode == Enum.KeyCode.Three then
 			local character = player.Character
 			if character then
 				local anim = AnimatorModule.new(character, specialAnimId)
