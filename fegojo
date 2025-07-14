@@ -140,7 +140,8 @@ uiListLayout.Padding = UDim.new(0, 4)
 uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 uiListLayout.Parent = frame
 
-local function createQuoteLabel(key, text)
+-- Create labels
+local function createQuoteLabel(order, text)
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.new(1, -10, 0, 24)
 	label.BackgroundTransparency = 1
@@ -149,59 +150,51 @@ local function createQuoteLabel(key, text)
 	label.TextXAlignment = Enum.TextXAlignment.Left
 	label.Font = Enum.Font.SourceSansBold
 	label.TextSize = 18
-	label.LayoutOrder = key.Value
-	
-	label.Text = string.format("[%d] %s", key.Value, text)
+	label.LayoutOrder = order
+	label.Text = string.format("[%d] %s", order, text)
 	label.Parent = frame
-	return label
 end
 
--- Fill GUI with quotes
-for keyCode, quoteText in pairs(quotes) do
-	-- Get number from Enum.KeyCode.One = 1, Two = 2, etc.
-	local keyNumber = 0
-	if keyCode == Enum.KeyCode.One then keyNumber = 1
-	elseif keyCode == Enum.KeyCode.Two then keyNumber = 2
-	elseif keyCode == Enum.KeyCode.Three then keyNumber = 3
-	elseif keyCode == Enum.KeyCode.Four then keyNumber = 4
-	elseif keyCode == Enum.KeyCode.Five then keyNumber = 5
-	end
-	createQuoteLabel({Value = keyNumber}, quoteText)
-end
+createQuoteLabel(1, quotes[Enum.KeyCode.One])
+createQuoteLabel(2, quotes[Enum.KeyCode.Two])
+createQuoteLabel(3, quotes[Enum.KeyCode.Three])
+createQuoteLabel(4, quotes[Enum.KeyCode.Four])
+createQuoteLabel(5, quotes[Enum.KeyCode.Five])
 
--- Show/Hide GUI on N hold
+-- Show/Hide GUI when holding N
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
-	if gameProcessed then return end
 	if input.KeyCode == Enum.KeyCode.N then
 		screenGui.Enabled = true
 	end
 end)
 
-UserInputService.InputEnded:Connect(function(input, gameProcessed)
+UserInputService.InputEnded:Connect(function(input)
 	if input.KeyCode == Enum.KeyCode.N then
 		screenGui.Enabled = false
 	end
 end)
 
--- Function to say chat message
+-- Say the message
 local function sayMessage(message)
 	ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(message, "All")
 end
 
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-	if gameProcessed then return end
+-- Detect 1-5 input regardless of N being held
+UserInputService.InputBegan:Connect(function(input)
+	local key = input.KeyCode
+	local quote = quotes[key]
 
-	local quote = quotes[input.KeyCode]
-	if not quote then return end
+	if quote then
+		sayMessage(quote)
 
-	sayMessage(quote)
-
-	if input.KeyCode == Enum.KeyCode.Three then
-		local character = player.Character
-		if character then
-			local anim = AnimatorModule.new(character, specialAnimId)
-			anim.Looped = false
-			anim:Play()
+		-- Play special animation for key 3
+		if key == Enum.KeyCode.Three then
+			local character = player.Character
+			if character then
+				local anim = AnimatorModule.new(character, specialAnimId)
+				anim.Looped = false
+				anim:Play()
+			end
 		end
 	end
 end)
