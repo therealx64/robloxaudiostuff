@@ -101,25 +101,17 @@ end)
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
 local player = Players.LocalPlayer
+local PlayerGui = player:WaitForChild("PlayerGui")
 
 -- Load Animator module if not already loaded
 if not getgenv()["Animator"] then
 	loadstring(game:HttpGet("https://raw.githubusercontent.com/xhayper/Animator/main/Source/Main.lua"))()
 end
-
 local AnimatorModule = getgenv().Animator
 
--- Say a message in chat
-local function sayMessage(message)
-	ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(message, "All")
-end
-
--- Animation ID for key 3
+-- Quotes and animation
 local specialAnimId = 115084974046541
-
--- Key to quote mappings
 local quotes = {
 	[Enum.KeyCode.One] = "Ahahahaha, ahahaha!... I'll murder you!",
 	[Enum.KeyCode.Two] = "Yaaaaay!",
@@ -127,6 +119,74 @@ local quotes = {
 	[Enum.KeyCode.Four] = "Guess I'll be a little rough.",
 	[Enum.KeyCode.Five] = "Don't worry, I'm the strongest."
 }
+
+-- Create the GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "QuoteListGui"
+screenGui.Enabled = false
+screenGui.ResetOnSpawn = false
+screenGui.Parent = PlayerGui
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 250, 0, 150)
+frame.Position = UDim2.new(1, -260, 1, -160) -- bottom right corner
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.BackgroundTransparency = 0.3
+frame.BorderSizePixel = 0
+frame.Parent = screenGui
+
+local uiListLayout = Instance.new("UIListLayout")
+uiListLayout.Padding = UDim.new(0, 4)
+uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+uiListLayout.Parent = frame
+
+local function createQuoteLabel(key, text)
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(1, -10, 0, 24)
+	label.BackgroundTransparency = 1
+	label.TextColor3 = Color3.fromRGB(255, 255, 255)
+	label.TextStrokeTransparency = 0.6
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	label.Font = Enum.Font.SourceSansBold
+	label.TextSize = 18
+	label.LayoutOrder = key.Value
+	
+	label.Text = string.format("[%d] %s", key.Value, text)
+	label.Parent = frame
+	return label
+end
+
+-- Fill GUI with quotes
+for keyCode, quoteText in pairs(quotes) do
+	-- Get number from Enum.KeyCode.One = 1, Two = 2, etc.
+	local keyNumber = 0
+	if keyCode == Enum.KeyCode.One then keyNumber = 1
+	elseif keyCode == Enum.KeyCode.Two then keyNumber = 2
+	elseif keyCode == Enum.KeyCode.Three then keyNumber = 3
+	elseif keyCode == Enum.KeyCode.Four then keyNumber = 4
+	elseif keyCode == Enum.KeyCode.Five then keyNumber = 5
+	end
+	createQuoteLabel({Value = keyNumber}, quoteText)
+end
+
+-- Show/Hide GUI on N hold
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+	if input.KeyCode == Enum.KeyCode.N then
+		screenGui.Enabled = true
+	end
+end)
+
+UserInputService.InputEnded:Connect(function(input, gameProcessed)
+	if input.KeyCode == Enum.KeyCode.N then
+		screenGui.Enabled = false
+	end
+end)
+
+-- Function to say chat message
+local function sayMessage(message)
+	ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(message, "All")
+end
 
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if gameProcessed then return end
